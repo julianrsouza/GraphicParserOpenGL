@@ -1,0 +1,88 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" 
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.unisinos</groupId>
+    <artifactId>visualizador-cena3d</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <name>Leitor e Visualizador de Cenas 3D</name>
+    <description>Projeto para visualização de modelos 3D usando OpenGL, GLFW e Assimp</description>
+
+    <properties>
+        <!-- Defina a versão do LWJGL aqui -->
+        <lwjgl.version>3.3.1</lwjgl.version>
+        <joml.version>1.10.5</joml.version>
+    </properties>
+
+    <dependencies>
+        <!-- LWJGL Core -->
+        <dependency>
+            <groupId>org.lwjgl</groupId>
+            <artifactId>lwjgl</artifactId>
+            <version>${lwjgl.version}</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <!-- LWJGL OpenGL -->
+        <dependency>
+            <groupId>org.lwjgl</groupId>
+            <artifactId>lwjgl-opengl</artifactId>
+            <version>${lwjgl.version}</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <!-- LWJGL GLFW (para janelas e captura de inputs) -->
+        <dependency>
+            <groupId>org.lwjgl</groupId>
+            <artifactId>lwjgl-glfw</artifactId>
+            <version>${lwjgl.version}</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <!-- LWJGL Assimp (para leitura de arquivos .obj e .ply) -->
+        <dependency>
+            <groupId>org.lwjgl</groupId>
+            <artifactId>lwjgl-assimp</artifactId>
+            <version>${lwjgl.version}</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <!-- JOML (Java OpenGL Math Library) para manipulação de vetores e matrizes 3D -->
+        <dependency>
+            <groupId>org.joml</groupId>
+            <artifactId>joml</artifactId>
+            <version>${joml.version}</version>
+        </dependency>
+
+        <!-- LWJGL Nativas para Windows -->
+        <dependency>
+            <groupId>org.lwjgl</groupId>
+            <artifactId>lwjgl</artifactId>
+            <classifier>natives-windows</classifier>
+            <version>${lwjgl.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.lwjgl</groupId>
+            <artifactId>lwjgl-opengl</artifactId>
+            <classifier>natives-windows</classifier>
+            <version>${lwjgl.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.lwjgl</groupId>
+            <artifactId>lwjgl-glfw</artifactId>
+            <classifier>natives-windows</classifier>
+            <version>${lwjgl.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.lwjgl</groupId>
+            <artifactId>lwjgl-assimp</artifactId>
+            <classifier>natives-windows</classifier>
+            <version>${lwjgl.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+    </dependencies>
+</project>
