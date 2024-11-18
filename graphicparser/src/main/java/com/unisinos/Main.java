@@ -15,10 +15,6 @@ public class Main {
     static Vector3f cameraFront = new Vector3f(0.0f, 0.0f, -1.0f);
     static Vector3f cameraUp = new Vector3f(0.0f, 1.0f, 0.0f);
     static Vector3f cameraRight = new Vector3f(1.0f, 0.0f, 0.0f);
-    static float lastX = 400.0f, lastY = 300.0f; // Posição inicial do mouse no centro da janela
-    static boolean firstMouse = true; // Flag para verificar o primeiro movimento do mouse
-    static float yawVariable = -90.0f, pitchVariable = 0.0f; // Controle do ângulo de rotação
-    static final float sensitivity = 0.05f; // Sensibilidade do movimento do mouse
     static float angle = 0.0f;
     static float scaleFactor = 1.0f;
     static Vector3f objectPosition = new Vector3f(0.0f, 0.0f, 0.0f);
