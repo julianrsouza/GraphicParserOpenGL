@@ -1,6 +1,7 @@
 package com.unisinos;
 
 import org.joml.Matrix4f;
+import org.joml.Quaternionf;
 import org.joml.Vector3f;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL11;
@@ -19,8 +20,8 @@ public class Main {
     static float scaleFactor = 1.0f;
     static Vector3f objectPosition = new Vector3f(0.0f, 0.0f, 0.0f);
     static boolean rotateX = false, rotateY = false, rotateZ = false;
-    static float pitch = 0.0f;  // Rotação ao redor do eixo X (para cima e para baixo)
-    static float yaw = 0.0f;    // Rotação ao redor do eixo Y (para os lados)
+    static float pitch = 0.0f;
+    static float yaw = 0.0f;
 
     public static void main(String[] args) {
         // Inicializa janela e shaders
@@ -54,7 +55,7 @@ public class Main {
         List<Objeto> objetos = Arrays.asList(obj1, obj2, obj3);
 
         GLFW.glfwSetKeyCallback(janela.getWindowHandle(), (window, key, scancode, action, mods) -> {
-            key_callback(window, key, scancode, action, mods, objetos);
+            key_callback(janela.getWindowHandle(), key, scancode, action, mods, objetos);
         });
 
         // Matriz de visão (para mover a câmera)
@@ -205,6 +206,19 @@ public class Main {
             yaw -= rotationSpeed;
             updateCameraDirection();
         }
+
+        if (key == GLFW.GLFW_KEY_Q && (action == GLFW.GLFW_PRESS || action == GLFW.GLFW_REPEAT)) {
+            cameraPos.mul(1.1f); // Aproxima a câmera (move para perto do objeto)
+        } else if (key == GLFW.GLFW_KEY_E && (action == GLFW.GLFW_PRESS || action == GLFW.GLFW_REPEAT)) {
+            cameraPos.mul(0.9f); // Afasta a câmera (move para longe do objeto)
+        }
+    
+        // Movimentos laterais (Z e X)
+        if (key == GLFW.GLFW_KEY_Z && (action == GLFW.GLFW_PRESS || action == GLFW.GLFW_REPEAT)) {
+            cameraPos.add(cameraRight.mul(-cameraSpeed)); // Move para a esquerda
+        } else if (key == GLFW.GLFW_KEY_X && (action == GLFW.GLFW_PRESS || action == GLFW.GLFW_REPEAT)) {
+            cameraPos.add(cameraRight.mul(cameraSpeed)); // Move para a direita
+        }
     }
     
     // Função para atualizar a direção da câmera com base no pitch e yaw
@@ -213,14 +227,23 @@ public class Main {
         float pitchRadians = (float)Math.toRadians(pitch);
         float yawRadians = (float)Math.toRadians(yaw);
     
-        // Cálculo da direção da câmera com base no pitch (rotação para cima/baixo) e yaw (rotação para os lados)
-        float x = (float)(Math.cos(pitchRadians) * Math.sin(yawRadians));
-        float y = (float)Math.sin(pitchRadians); // Alterando para que o eixo Y seja a rotação para cima/baixo
-        float z = (float)(Math.cos(pitchRadians) * Math.cos(yawRadians));
+        // Criando o quaternion de rotação
+        Quaternionf pitchQuat = new Quaternionf().rotateAxis(pitchRadians, 1.0f, 0.0f, 0.0f);
+        Quaternionf yawQuat = new Quaternionf().rotateAxis(yawRadians, 0.0f, 1.0f, 0.0f);
     
-        // Atualiza a posição da câmera, mantendo a distância constante (5.0f)
-        cameraPos.set(5.0f * x, 5.0f * y, 5.0f * z);
+        // Multiplicando os quaternions para obter a rotação combinada
+        Quaternionf rotation = yawQuat.mul(pitchQuat);
+    
+        // A direção da câmera deve ser no eixo Z positivo inicialmente
+        Vector3f direction = new Vector3f(0.0f, 0.0f, 1.0f);
+        // Aplica a rotação ao vetor direção
+        rotation.transform(direction);
+    
+        // Atualiza a posição da câmera com base na direção calculada
+        cameraPos.set(direction).mul(5.0f);
     }
+    
+
 
     
     public static void setSelectedObj(List<Objeto> objects, int index) {
