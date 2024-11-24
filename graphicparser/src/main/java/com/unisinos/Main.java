@@ -23,6 +23,9 @@ public class Main {
     static float pitch = 0.0f;
     static float yaw = 0.0f;
     static float distance = 5.0f;
+    static float rotationSpeed = 1.0f;
+    static Objeto objSelecionado = null;
+    static float scaleStep = 0.1f;
 
     public static void main(String[] args) {
         // Inicializa janela e shaders
@@ -66,6 +69,9 @@ public class Main {
         // Loop principal da aplicação
         while (!GLFW.glfwWindowShouldClose(janela.getWindowHandle())) {
             GLFW.glfwPollEvents();
+
+            objSelecionado = getSelectedObject(objetos);
+
             GL11.glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
 
             shader.use();
@@ -73,18 +79,18 @@ public class Main {
             viewMatrix = new Matrix4f().lookAt(cameraPos, new Vector3f(0, 0, 0), cameraUp);
 
             // Atualiza matrizes de transformação e uniformes
-            shader.setUniform("view", viewMatrix); // AQUI: viewMatrix recalculada
+            shader.setUniform("view", viewMatrix);
             shader.setUniform("projection", projectionMatrix);
             shader.setUniform("lightPos", lightPos);
             shader.setUniform("lightColor", lightColor);
-            shader.setUniform("cameraPos", cameraPos); // AQUI: atualiza posição da câmera
+            shader.setUniform("cameraPos", cameraPos);
             shader.setUniform("ka", ka);
             shader.setUniform("kd", kd);
             shader.setUniform("ks", ks);
             shader.setUniform("q", q);
 
             // Renderiza os objetos
-            renderObjects(objetos, shader, angle, objectPosition, viewMatrix);
+            renderObjects(objetos, shader, angle, viewMatrix);
 
             // Limpar a ligação do VAO
             GL30.glBindVertexArray(0);
@@ -97,16 +103,7 @@ public class Main {
     }
 
     // Função de renderização dos objetos
-    public static void renderObjects(List<Objeto> objetos, Shader shader, float angle, Vector3f objectPosition, Matrix4f viewMatrix) {
-        Objeto objSelecionado = null;
-    
-        // Verifica qual objeto está selecionado
-        for (Objeto obj : objetos) {
-            if (obj.isSelected()) {
-                objSelecionado = obj;
-                break;
-            }
-        }
+    public static void renderObjects(List<Objeto> objetos, Shader shader, float angle, Matrix4f viewMatrix) {
     
         if (objSelecionado != null) {
             // Resetar a modelMatrix para garantir que não haja acúmulo de transformações
@@ -114,7 +111,7 @@ public class Main {
     
             // Centraliza o objeto selecionado e aplica a escala
             objSelecionado.modelMatrix.scale(0.8f);  // Aumenta a escala do objeto selecionado
-            objSelecionado.modelMatrix.translate(objectPosition);  // Centraliza o objeto
+            objSelecionado.modelMatrix.translate(objSelecionado.getPosition());  // Usa a posição do objeto selecionado
     
             // Aplica rotações se necessário
             if (rotateX) {
@@ -164,13 +161,11 @@ public class Main {
             }
         }
     }
-
     
     // Função de controle de teclado
     public static void key_callback(long window, int key, int scancode, int action, int mods, List<Objeto> objects) {
         // Configurações de movimento
         float cameraSpeed = 0.1f; // Velocidade de movimento da câmera
-        float rotationSpeed = 1.0f; // Velocidade de rotação da câmera
     
         if (key == GLFW.GLFW_KEY_1 && action == GLFW.GLFW_PRESS) {
             setSelectedObj(objects, 0);
@@ -211,16 +206,30 @@ public class Main {
             distance *= 0.9f; // Afasta a câmera
             updateCameraDirection(); // Recalcula a posição da câmera com a nova distância
         }
-    
-        if (key == GLFW.GLFW_KEY_UP && (action == GLFW.GLFW_PRESS || action == GLFW.GLFW_REPEAT)) {
-            objectPosition.y += 0.1f; // Move o objeto para cima
-        } else if (key == GLFW.GLFW_KEY_DOWN && (action == GLFW.GLFW_PRESS || action == GLFW.GLFW_REPEAT)) {
-            objectPosition.y -= 0.1f; // Move o objeto para baixo
-        } else if (key == GLFW.GLFW_KEY_LEFT && (action == GLFW.GLFW_PRESS || action == GLFW.GLFW_REPEAT)) {
-            objectPosition.x -= 0.1f; // Move o objeto para a esquerda
-        } else if (key == GLFW.GLFW_KEY_RIGHT && (action == GLFW.GLFW_PRESS || action == GLFW.GLFW_REPEAT)) {
-            objectPosition.x += 0.1f; // Move o objeto para a direita
+        
+        if (objSelecionado != null) {
+            if (key == GLFW.GLFW_KEY_UP && (action == GLFW.GLFW_PRESS || action == GLFW.GLFW_REPEAT)) {
+                objSelecionado.getPosition().y += 0.1f; // Move o objeto para cima
+                objSelecionado.updateModelMatrix(); // Atualiza a matriz do objeto
+            } else if (key == GLFW.GLFW_KEY_DOWN && (action == GLFW.GLFW_PRESS || action == GLFW.GLFW_REPEAT)) {
+                objSelecionado.getPosition().y -= 0.1f; // Move o objeto para baixo
+                objSelecionado.updateModelMatrix(); // Atualiza a matriz do objeto
+            } else if (key == GLFW.GLFW_KEY_LEFT && (action == GLFW.GLFW_PRESS || action == GLFW.GLFW_REPEAT)) {
+                objSelecionado.getPosition().x -= 0.1f; // Move o objeto para a esquerda
+                objSelecionado.updateModelMatrix(); // Atualiza a matriz do objeto
+            } else if (key == GLFW.GLFW_KEY_RIGHT && (action == GLFW.GLFW_PRESS || action == GLFW.GLFW_REPEAT)) {
+                objSelecionado.getPosition().x += 0.1f; // Move o objeto para a direita
+                objSelecionado.updateModelMatrix(); // Atualiza a matriz do objeto
+            }
+            // Controle de escala
+            if (key == GLFW.GLFW_KEY_KP_ADD && action == GLFW.GLFW_PRESS) { // "+" do teclado numérico
+                objSelecionado.setScale(objSelecionado.getScale() + scaleStep);
+            } else if (key == GLFW.GLFW_KEY_KP_SUBTRACT && action == GLFW.GLFW_PRESS) { // "-" do teclado numérico
+                float newScale = Math.max(0.1f, objSelecionado.getScale() - scaleStep); // Limita escala mínima
+                objSelecionado.setScale(newScale);
+            }
         }
+
     }
     
     // Função para atualizar a direção da câmera com base no pitch e yaw
@@ -245,17 +254,25 @@ public class Main {
         // Atualiza a posição da câmera com a direção calculada, mantendo a distância
         cameraPos.set(direction).mul(distance);
     }
-    
 
+    private static Objeto getSelectedObject(List<Objeto> objetos) {
+        Objeto objSelecionado = null;
+        for (Objeto obj : objetos) {
+            if (obj.isSelected()) {
+                objSelecionado = obj;
+                break;
+            }
+        }
+        return objSelecionado;
+    }
 
-    
     public static void setSelectedObj(List<Objeto> objects, int index) {
         for (int i = 0; i < objects.size(); i++) {
-            objects.get(i).setSelected(i == index); // Atualiza qual objeto está selecionado
+            objects.get(i).setSelected(i == index);
         }
         if (index == -1) {
-            cameraPos.set(0.0f, 0.0f, 5.0f); // Reseta a posição da câmera para o estado inicial
-            objectPosition.set(0.0f, 0.0f, 0.0f); // Restaura posição padrão
+            cameraPos.set(0.0f, 0.0f, 5.0f);
+            objectPosition.set(0.0f, 0.0f, 0.0f);
         }
     }
 

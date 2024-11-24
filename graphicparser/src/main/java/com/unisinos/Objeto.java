@@ -10,12 +10,15 @@ public class Objeto {
     private Vector3f position;
     public Matrix4f modelMatrix;
     private boolean selected;
+    private float scale;
 
     public Objeto(Vector3f position) {
         this.meshes = new ArrayList<>();
         this.position = position;
         this.modelMatrix = new Matrix4f();
         this.selected = false;
+        this.scale = 1.0f;
+        updateModelMatrix();
     }
 
     public void addMesh(Mesh mesh) {
@@ -38,11 +41,29 @@ public class Objeto {
         this.selected = selected;
     }
 
-    public void updateModelMatrix(float scale) {
-        this.modelMatrix = new Matrix4f().translate(position).scale(scale);
+    public void updateModelMatrix() {
+        this.modelMatrix = new Matrix4f().translate(this.position).scale(this.scale);
     }
 
     public Matrix4f getModelMatrix() {
         return modelMatrix;
+    }
+
+    public Vector3f getPosition() {
+        return position;
+    }
+
+    public void setPosition(Vector3f position) {
+        this.position = position;
+        updateModelMatrix();
+    }
+
+    public float getScale() {
+        return scale;
+    }
+
+    public void setScale(float scale) {
+        this.scale = scale;
+        updateModelMatrix();
     }
 }
