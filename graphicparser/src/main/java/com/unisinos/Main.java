@@ -22,6 +22,7 @@ public class Main {
     static boolean rotateX = false, rotateY = false, rotateZ = false;
     static float pitch = 0.0f;
     static float yaw = 0.0f;
+    static float distance = 5.0f;
 
     public static void main(String[] args) {
         // Inicializa janela e shaders
@@ -31,27 +32,13 @@ public class Main {
         Shader shader = new Shader("graphicparser\\src\\main\\resources\\shaders\\vertex.glsl", 
                                    "graphicparser\\src\\main\\resources\\shaders\\fragment.glsl");
 
-        // Carrega os objetos .obj
-        int[] nVertices1 = new int[1];
-        int VAO1 = OBJLoader.loadSimpleOBJ("graphicparser\\src\\main\\resources\\obj\\suzanetriangle.obj", nVertices1);
-        
-        int[] nVertices2 = new int[1];
-        int VAO2 = OBJLoader.loadSimpleOBJ("graphicparser\\src\\main\\resources\\obj\\Nave.obj", nVertices2);
-        
-        int[] nVertices3 = new int[1];
-        int VAO3 = OBJLoader.loadSimpleOBJ("graphicparser\\src\\main\\resources\\obj\\cubotriangle.obj", nVertices3);
-        
-        // Verifica se houve erro ao carregar os modelos
-        if (VAO1 == -1 || VAO2 == -1 || VAO3 == -1) {
-            System.out.println("Falha ao carregar o modelo .obj");
-            return;
-        }
+        List<Mesh> meshes1 = OBJLoader.loadOBJWithMultipleMeshes("graphicparser\\src\\main\\resources\\obj\\Pikachu.obj");
+        List<Mesh> meshes2 = OBJLoader.loadOBJWithMultipleMeshes("graphicparser\\src\\main\\resources\\obj\\suzanetriangle.obj");
+        List<Mesh> meshes3 = OBJLoader.loadOBJWithMultipleMeshes("graphicparser\\src\\main\\resources\\obj\\nave.obj");
 
-        // Cria os objetos 3D
-        Objeto obj1 = new Objeto(VAO1, nVertices1[0], new Vector3f(-1.0f, 0.0f, 0.0f));
-        Objeto obj2 = new Objeto(VAO2, nVertices2[0], new Vector3f(0.0f, 0.0f, 0.0f));
-        Objeto obj3 = new Objeto(VAO3, nVertices3[0], new Vector3f(1.0f, 0.0f, 0.0f));
-
+        Objeto obj1 = createObject(new Vector3f(-1.0f, 0.0f, 0.0f), meshes1);
+        Objeto obj2 = createObject(new Vector3f(0.0f, 0.0f, 0.0f), meshes2);
+        Objeto obj3 = createObject(new Vector3f(1.0f, 0.0f, 0.0f), meshes3);
         List<Objeto> objetos = Arrays.asList(obj1, obj2, obj3);
 
         GLFW.glfwSetKeyCallback(janela.getWindowHandle(), (window, key, scancode, action, mods) -> {
@@ -59,7 +46,7 @@ public class Main {
         });
 
         // Matriz de visão (para mover a câmera)
-        Matrix4f viewMatrix = new Matrix4f().lookAt(cameraPos, new Vector3f(0, 0, 0), cameraUp); // AQUI: Configura a matriz de visão inicial
+        Matrix4f viewMatrix = new Matrix4f().lookAt(cameraPos, cameraPos.add(cameraFront), cameraUp);
         // Matriz de projeção (perspectiva)
         Matrix4f projectionMatrix = new Matrix4f().perspective((float) Math.toRadians(45), 800f / 600f, 0.1f, 100f);
 
@@ -112,7 +99,7 @@ public class Main {
     // Função de renderização dos objetos
     public static void renderObjects(List<Objeto> objetos, Shader shader, float angle, Vector3f objectPosition, Matrix4f viewMatrix) {
         Objeto objSelecionado = null;
-
+    
         // Verifica qual objeto está selecionado
         for (Objeto obj : objetos) {
             if (obj.isSelected()) {
@@ -120,15 +107,15 @@ public class Main {
                 break;
             }
         }
-
+    
         if (objSelecionado != null) {
             // Resetar a modelMatrix para garantir que não haja acúmulo de transformações
             objSelecionado.modelMatrix = new Matrix4f();
-
-            // Centraliza o objeto selecionado e aplica a escala de 80% da tela
+    
+            // Centraliza o objeto selecionado e aplica a escala
             objSelecionado.modelMatrix.scale(0.8f);  // Aumenta a escala do objeto selecionado
             objSelecionado.modelMatrix.translate(objectPosition);  // Centraliza o objeto
-
+    
             // Aplica rotações se necessário
             if (rotateX) {
                 objSelecionado.modelMatrix.rotate(angle, new Vector3f(1.0f, 0.0f, 0.0f));
@@ -137,35 +124,44 @@ public class Main {
             } else if (rotateZ) {
                 objSelecionado.modelMatrix.rotate(angle, new Vector3f(0.0f, 0.0f, 1.0f));
             }
-
+    
             // Atualiza a matriz do objeto no shader
             shader.setUniform("model", objSelecionado.modelMatrix);
             shader.setUniform("view", viewMatrix);
             shader.setUniform("cameraPos", cameraPos);
-
-            // Renderiza o objeto selecionado
-            GL30.glBindVertexArray(objSelecionado.VAO);
-            GL11.glDrawArrays(GL11.GL_TRIANGLES, 0, objSelecionado.nVertices);
+    
+            // Renderiza as malhas do objeto selecionado
+            for (Mesh mesh : objSelecionado.getMeshes()) {
+                GL30.glBindVertexArray(mesh.getVao());
+                GL11.glDrawArrays(GL11.GL_TRIANGLES, 0, mesh.getVertexCount());
+            }
+    
+            GL30.glBindVertexArray(0);
         } else {
+            // Caso nenhum objeto esteja selecionado, renderiza todos os objetos de forma padrão
             float totalWidth = 3 * 0.3f + 2.0f * 2.0f;
             float startX = -totalWidth / 2.0f + 0.3f / 2.0f;
-
+    
             for (Objeto obj : objetos) {
                 obj.modelMatrix = new Matrix4f();
-
+    
                 obj.modelMatrix.scale(0.3f);
                 obj.modelMatrix.translate(new Vector3f(startX, 0.0f, 0.0f));
-
+    
                 shader.setUniform("model", obj.modelMatrix);
                 shader.setUniform("view", viewMatrix);
                 shader.setUniform("cameraPos", cameraPos);
-
-                GL30.glBindVertexArray(obj.VAO);
-                GL11.glDrawArrays(GL11.GL_TRIANGLES, 0, obj.nVertices);
-
+    
+                // Renderiza as malhas de todos os objetos
+                for (Mesh mesh : obj.getMeshes()) {
+                    GL30.glBindVertexArray(mesh.getVao());
+                    GL11.glDrawArrays(GL11.GL_TRIANGLES, 0, mesh.getVertexCount());
+                }
+    
+                GL30.glBindVertexArray(0);
+    
                 startX += 0.3f + 2.0f;
             }
-
         }
     }
 
@@ -206,41 +202,48 @@ public class Main {
             yaw -= rotationSpeed;
             updateCameraDirection();
         }
-
+    
+        // Controle de zoom com Q e E
         if (key == GLFW.GLFW_KEY_Q && (action == GLFW.GLFW_PRESS || action == GLFW.GLFW_REPEAT)) {
-            cameraPos.mul(1.1f); // Aproxima a câmera (move para perto do objeto)
+            distance *= 1.1f; // Aproxima a câmera
+            updateCameraDirection(); // Recalcula a posição da câmera com a nova distância
         } else if (key == GLFW.GLFW_KEY_E && (action == GLFW.GLFW_PRESS || action == GLFW.GLFW_REPEAT)) {
-            cameraPos.mul(0.9f); // Afasta a câmera (move para longe do objeto)
+            distance *= 0.9f; // Afasta a câmera
+            updateCameraDirection(); // Recalcula a posição da câmera com a nova distância
         }
     
-        // Movimentos laterais (Z e X)
-        if (key == GLFW.GLFW_KEY_Z && (action == GLFW.GLFW_PRESS || action == GLFW.GLFW_REPEAT)) {
-            cameraPos.add(cameraRight.mul(-cameraSpeed)); // Move para a esquerda
-        } else if (key == GLFW.GLFW_KEY_X && (action == GLFW.GLFW_PRESS || action == GLFW.GLFW_REPEAT)) {
-            cameraPos.add(cameraRight.mul(cameraSpeed)); // Move para a direita
+        if (key == GLFW.GLFW_KEY_UP && (action == GLFW.GLFW_PRESS || action == GLFW.GLFW_REPEAT)) {
+            objectPosition.y += 0.1f; // Move o objeto para cima
+        } else if (key == GLFW.GLFW_KEY_DOWN && (action == GLFW.GLFW_PRESS || action == GLFW.GLFW_REPEAT)) {
+            objectPosition.y -= 0.1f; // Move o objeto para baixo
+        } else if (key == GLFW.GLFW_KEY_LEFT && (action == GLFW.GLFW_PRESS || action == GLFW.GLFW_REPEAT)) {
+            objectPosition.x -= 0.1f; // Move o objeto para a esquerda
+        } else if (key == GLFW.GLFW_KEY_RIGHT && (action == GLFW.GLFW_PRESS || action == GLFW.GLFW_REPEAT)) {
+            objectPosition.x += 0.1f; // Move o objeto para a direita
         }
     }
     
     // Função para atualizar a direção da câmera com base no pitch e yaw
     private static void updateCameraDirection() {
         // Converte o pitch e o yaw para radianos
-        float pitchRadians = (float)Math.toRadians(pitch);
-        float yawRadians = (float)Math.toRadians(yaw);
+        float pitchRadians = (float) Math.toRadians(pitch);
+        float yawRadians = (float) Math.toRadians(yaw);
     
-        // Criando o quaternion de rotação
+        // Criando os quaternions para as rotações de pitch e yaw
         Quaternionf pitchQuat = new Quaternionf().rotateAxis(pitchRadians, 1.0f, 0.0f, 0.0f);
         Quaternionf yawQuat = new Quaternionf().rotateAxis(yawRadians, 0.0f, 1.0f, 0.0f);
     
         // Multiplicando os quaternions para obter a rotação combinada
         Quaternionf rotation = yawQuat.mul(pitchQuat);
     
-        // A direção da câmera deve ser no eixo Z positivo inicialmente
+        // A direção inicial da câmera é no eixo Z positivo
         Vector3f direction = new Vector3f(0.0f, 0.0f, 1.0f);
+    
         // Aplica a rotação ao vetor direção
         rotation.transform(direction);
     
-        // Atualiza a posição da câmera com base na direção calculada
-        cameraPos.set(direction).mul(5.0f);
+        // Atualiza a posição da câmera com a direção calculada, mantendo a distância
+        cameraPos.set(direction).mul(distance);
     }
     
 
@@ -254,5 +257,13 @@ public class Main {
             cameraPos.set(0.0f, 0.0f, 5.0f); // Reseta a posição da câmera para o estado inicial
             objectPosition.set(0.0f, 0.0f, 0.0f); // Restaura posição padrão
         }
+    }
+
+    private static Objeto createObject( Vector3f vector, List<Mesh> meshes) {
+        Objeto objeto = new Objeto(vector);
+        for (Mesh mesh : meshes) {
+            objeto.addMesh(mesh);
+        }
+        return objeto;
     }
 }
