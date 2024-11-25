@@ -24,6 +24,13 @@
             <scope>compile</scope>
         </dependency>
 
+        <dependency>
+            <groupId>org.lwjgl</groupId>
+            <artifactId>lwjgl-stb</artifactId>
+            <version>${lwjgl.version}</version>
+            <scope>compile</scope>
+        </dependency>
+
         <!-- LWJGL OpenGL -->
         <dependency>
             <groupId>org.lwjgl</groupId>
@@ -84,5 +91,15 @@
             <version>${lwjgl.version}</version>
             <scope>runtime</scope>
         </dependency>
+
+        <!-- Dependência nativa para o STB (leitura de texturas) -->
+        <dependency>
+            <groupId>org.lwjgl</groupId>
+            <artifactId>lwjgl-stb</artifactId>
+            <classifier>natives-windows</classifier>
+            <version>${lwjgl.version}</version>
+            <scope>runtime</scope>
+        </dependency>
     </dependencies>
+
 </project>

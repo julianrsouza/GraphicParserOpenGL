@@ -39,13 +39,13 @@ public class Main {
                                    "graphicparser\\src\\main\\resources\\shaders\\fragment.glsl");
 
         List<Mesh> meshes1 = OBJLoader.loadOBJWithMultipleMeshes("graphicparser\\src\\main\\resources\\obj\\Pikachu.obj");
-        List<Mesh> meshes2 = OBJLoader.loadOBJWithMultipleMeshes("graphicparser\\src\\main\\resources\\obj\\suzanetriangle.obj");
-        List<Mesh> meshes3 = OBJLoader.loadOBJWithMultipleMeshes("graphicparser\\src\\main\\resources\\obj\\nave.obj");
+        //List<Mesh> meshes2 = OBJLoader.loadOBJWithMultipleMeshes("graphicparser\\src\\main\\resources\\obj\\suzanetriangle.obj");
+        //List<Mesh> meshes3 = OBJLoader.loadOBJWithMultipleMeshes("graphicparser\\src\\main\\resources\\obj\\nave.obj");
 
         Objeto obj1 = createObject(new Vector3f(-1.0f, 0.0f, 0.0f), meshes1);
-        Objeto obj2 = createObject(new Vector3f(0.0f, 0.0f, 0.0f), meshes2);
-        Objeto obj3 = createObject(new Vector3f(1.0f, 0.0f, 0.0f), meshes3);
-        List<Objeto> objetos = Arrays.asList(obj1, obj2, obj3);
+        //Objeto obj2 = createObject(new Vector3f(0.0f, 0.0f, 0.0f), meshes2);
+        //Objeto obj3 = createObject(new Vector3f(1.0f, 0.0f, 0.0f), meshes3);
+        List<Objeto> objetos = Arrays.asList(obj1);
 
         GLFW.glfwSetKeyCallback(janela.getWindowHandle(), (window, key, scancode, action, mods) -> {
             key_callback(janela.getWindowHandle(), key, scancode, action, mods, objetos);
@@ -155,6 +155,9 @@ public class Main {
     
             // Renderiza as malhas do objeto selecionado
             for (Mesh mesh : objSelecionado.getMeshes()) {
+                if (mesh.getMaterial().getTextureId() != -1) {
+                    GL30.glBindTexture(GL30.GL_TEXTURE_2D, mesh.getMaterial().getTextureId());
+                }
                 GL30.glBindVertexArray(mesh.getVao());
                 GL11.glDrawArrays(GL11.GL_TRIANGLES, 0, mesh.getVertexCount());
             }
@@ -185,6 +188,9 @@ public class Main {
     
                 // Renderiza as malhas de todos os objetos
                 for (Mesh mesh : obj.getMeshes()) {
+                    if (mesh.getMaterial().getTextureId() != -1) {
+                        GL30.glBindTexture(GL30.GL_TEXTURE_2D, mesh.getMaterial().getTextureId());
+                    }
                     GL30.glBindVertexArray(mesh.getVao());
                     GL11.glDrawArrays(GL11.GL_TRIANGLES, 0, mesh.getVertexCount());
                 }

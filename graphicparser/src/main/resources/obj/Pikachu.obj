@@ -1,4 +1,4 @@
-mtllib mtls/Pikachu.mtl
+mtllib graphicparser\src\main\resources\mtl\Pikachu.mtl
 
 v 0.000000 3.194109 1.381076
 v -0.171530 3.407741 1.369944

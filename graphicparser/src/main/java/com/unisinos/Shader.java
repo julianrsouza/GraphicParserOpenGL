@@ -92,6 +92,28 @@ public class Shader {
         GL20.glUniform3f(location, value.x, value.y, value.z);
     }
 
+    // Método para definir um array de floats como uniforme
+    public void setUniform(String name, float[] values) {
+        int location = GL20.glGetUniformLocation(programId, name);
+        FloatBuffer buffer = BufferUtils.createFloatBuffer(values.length);
+        buffer.put(values).flip();  // Preenche o buffer com os valores e o "flip" prepara para leitura
+        GL20.glUniform3fv(location, buffer);
+    }
+
+    // Método para definir um vetor de 3 floats (como ka, kd ou ks)
+    public void setUniform(String name, float[] values, int size) {
+        int location = GL20.glGetUniformLocation(programId, name);
+        FloatBuffer buffer = BufferUtils.createFloatBuffer(values.length);
+        buffer.put(values).flip();
+        
+        // Exemplo de uniform para vetores 3D
+        if (size == 3) {
+            GL20.glUniform3fv(location, buffer);
+        } else {
+            GL20.glUniform1fv(location, buffer);  // Para arrays de 1 float
+        }
+    }
+
     public void limpar() {
         // Exclui o programa shader ao final
         GL20.glDeleteProgram(programId);
