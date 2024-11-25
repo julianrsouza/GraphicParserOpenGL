@@ -16,10 +16,13 @@ public class Main {
     static Vector3f cameraFront = new Vector3f(0.0f, 0.0f, -1.0f);
     static Vector3f cameraUp = new Vector3f(0.0f, 1.0f, 0.0f);
     static Vector3f cameraRight = new Vector3f(1.0f, 0.0f, 0.0f);
-    static float angle = 0.0f;
+    static float angleX = 0.0f;
+    static float angleY = 0.0f;
+    static float angleZ = 0.0f;
     static float scaleFactor = 1.0f;
     static Vector3f objectPosition = new Vector3f(0.0f, 0.0f, 0.0f);
-    static boolean rotateX = false, rotateY = false, rotateZ = false;
+    static boolean rotateXmore = false, rotateYmore = false, rotateZmore = false;
+    static boolean rotateXminus = false, rotateYminus = false, rotateZminus = false;
     static float pitch = 0.0f;
     static float yaw = 0.0f;
     static float distance = 5.0f;
@@ -76,6 +79,30 @@ public class Main {
 
             shader.use();
 
+            if (rotateXmore) {
+                angleX += 0.02;
+            }
+
+            if (rotateXminus) {
+                angleX -= 0.02;
+            }
+
+            if (rotateYmore) {
+                angleY += 0.02;
+            }
+
+            if (rotateYminus) {
+                angleY -= 0.02;
+            }
+            
+            if (rotateZmore) {
+                angleZ += 0.02;
+            }
+
+            if (rotateZminus) {
+                angleZ -= 0.02;
+            }
+
             viewMatrix = new Matrix4f().lookAt(cameraPos, new Vector3f(0, 0, 0), cameraUp);
 
             // Atualiza matrizes de transformação e uniformes
@@ -90,7 +117,7 @@ public class Main {
             shader.setUniform("q", q);
 
             // Renderiza os objetos
-            renderObjects(objetos, shader, angle, viewMatrix);
+            renderObjects(objetos, shader, angleX, angleY, angleZ, viewMatrix);
 
             // Limpar a ligação do VAO
             GL30.glBindVertexArray(0);
@@ -103,24 +130,23 @@ public class Main {
     }
 
     // Função de renderização dos objetos
-    public static void renderObjects(List<Objeto> objetos, Shader shader, float angle, Matrix4f viewMatrix) {
-    
+    // Função de renderização dos objetos
+    public static void renderObjects(List<Objeto> objetos, Shader shader, float angleX, float angleY, float angleZ, Matrix4f viewMatrix) {
         if (objSelecionado != null) {
             // Resetar a modelMatrix para garantir que não haja acúmulo de transformações
             objSelecionado.modelMatrix = new Matrix4f();
     
-            // Centraliza o objeto selecionado e aplica a escala
-            objSelecionado.modelMatrix.scale(0.8f);  // Aumenta a escala do objeto selecionado
+            // Usar o valor de escala do objeto selecionado
+            objSelecionado.modelMatrix.scale(objSelecionado.getScale());  // Aplica a escala real
+    
+            // Aplica a translação do objeto
             objSelecionado.modelMatrix.translate(objSelecionado.getPosition());  // Usa a posição do objeto selecionado
     
             // Aplica rotações se necessário
-            if (rotateX) {
-                objSelecionado.modelMatrix.rotate(angle, new Vector3f(1.0f, 0.0f, 0.0f));
-            } else if (rotateY) {
-                objSelecionado.modelMatrix.rotate(angle, new Vector3f(0.0f, 1.0f, 0.0f));
-            } else if (rotateZ) {
-                objSelecionado.modelMatrix.rotate(angle, new Vector3f(0.0f, 0.0f, 1.0f));
-            }
+            objSelecionado.modelMatrix
+            .rotateX(angleX)  // Aplica a rotação acumulada no eixo X
+            .rotateY(angleY)  // Aplica a rotação acumulada no eixo Y
+            .rotateZ(angleZ);
     
             // Atualiza a matriz do objeto no shader
             shader.setUniform("model", objSelecionado.modelMatrix);
@@ -142,9 +168,17 @@ public class Main {
             for (Objeto obj : objetos) {
                 obj.modelMatrix = new Matrix4f();
     
-                obj.modelMatrix.scale(0.3f);
+                // Usar uma escala padrão para objetos não selecionados
+                obj.modelMatrix.scale(0.3f);  // Escala padrão para objetos não selecionados
                 obj.modelMatrix.translate(new Vector3f(startX, 0.0f, 0.0f));
     
+                // Aplica rotações se necessário
+                obj.modelMatrix
+                .rotateX(angleX)  // Aplica a rotação acumulada no eixo X
+                .rotateY(angleY)  // Aplica a rotação acumulada no eixo Y
+                .rotateZ(angleZ);
+    
+                // Atualiza a matriz do objeto no shader
                 shader.setUniform("model", obj.modelMatrix);
                 shader.setUniform("view", viewMatrix);
                 shader.setUniform("cameraPos", cameraPos);
@@ -221,15 +255,32 @@ public class Main {
                 objSelecionado.getPosition().x += 0.1f; // Move o objeto para a direita
                 objSelecionado.updateModelMatrix(); // Atualiza a matriz do objeto
             }
-            // Controle de escala
-            if (key == GLFW.GLFW_KEY_KP_ADD && action == GLFW.GLFW_PRESS) { // "+" do teclado numérico
-                objSelecionado.setScale(objSelecionado.getScale() + scaleStep);
-            } else if (key == GLFW.GLFW_KEY_KP_SUBTRACT && action == GLFW.GLFW_PRESS) { // "-" do teclado numérico
-                float newScale = Math.max(0.1f, objSelecionado.getScale() - scaleStep); // Limita escala mínima
-                objSelecionado.setScale(newScale);
+            if (objSelecionado != null) {
+                if (key == GLFW.GLFW_KEY_KP_ADD && action == GLFW.GLFW_PRESS) {
+                    objSelecionado.setScale(objSelecionado.getScale() + scaleStep);
+                    System.out.println(objSelecionado.getScale());
+                    objSelecionado.updateModelMatrix();
+                } else if (key == GLFW.GLFW_KEY_KP_SUBTRACT && action == GLFW.GLFW_PRESS) {
+                    float newScale = Math.max(0.1f, objSelecionado.getScale() - scaleStep);
+                    objSelecionado.setScale(newScale);
+                    System.out.println(objSelecionado.getScale());
+                    objSelecionado.updateModelMatrix();
+                }
+            }
+            if (key == GLFW.GLFW_KEY_KP_2 && action == GLFW.GLFW_PRESS) {
+                rotateXminus = !rotateXminus;
+            } else if (key == GLFW.GLFW_KEY_KP_8 && action == GLFW.GLFW_PRESS) {
+                rotateXmore = !rotateXmore;
+            } else if (key == GLFW.GLFW_KEY_KP_4 && action == GLFW.GLFW_PRESS) {
+                rotateYminus = !rotateYminus;
+            } else if (key == GLFW.GLFW_KEY_KP_6 && action == GLFW.GLFW_PRESS) {
+                rotateYmore = !rotateYmore;
+            } else if (key == GLFW.GLFW_KEY_KP_1 && action == GLFW.GLFW_PRESS) {
+                rotateZminus = !rotateZminus;
+            } else if (key == GLFW.GLFW_KEY_KP_3 && action == GLFW.GLFW_PRESS) {
+                rotateZmore = !rotateZmore;
             }
         }
-
     }
     
     // Função para atualizar a direção da câmera com base no pitch e yaw

@@ -42,7 +42,9 @@ public class Objeto {
     }
 
     public void updateModelMatrix() {
-        this.modelMatrix = new Matrix4f().translate(this.position).scale(this.scale);
+        this.modelMatrix = new Matrix4f()
+            .scale(this.scale)
+            .translate(this.position);
     }
 
     public Matrix4f getModelMatrix() {
@@ -64,6 +66,6 @@ public class Objeto {
 
     public void setScale(float scale) {
         this.scale = scale;
-        updateModelMatrix();
+        updateModelMatrix(); // Recalcula a modelMatrix sempre que a escala for alterada
     }
 }
