@@ -14,9 +14,9 @@ public class JsonWriter {
      public static void main(String[] args) {
         // Configurando o objeto Scene
         Scene scene = new Scene();
-        scene.setObj1StartPosition(new Vector3f(-1.0f, 0.0f, 0.0f));
-        scene.setObj2StartPosition(new Vector3f(0.0f, 0.0f, 0.0f));
-        scene.setObj3StartPosition(new Vector3f(1.0f, 0.0f, 0.0f));
+        scene.setObj1StartPosition(new Vector3f(-3.0f, -3.0f, -3.0f));
+        scene.setObj2StartPosition(new Vector3f(0.0f, -2.0f, 0.0f));
+        scene.setObj3StartPosition(new Vector3f(3.0f, 3.0f, 3.0f));
         scene.setParametricCurveOn(true);
         scene.setCameraPos(new Vector3f(0.0f, 0.0f, 5.0f));
         scene.setCameraFront(new Vector3f(0.0f, 0.0f, -1.0f));

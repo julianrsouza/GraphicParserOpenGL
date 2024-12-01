@@ -2,7 +2,7 @@
   "obj1StartPosition" : {
     "x" : -3.0,
     "y" : -3.0,
-    "z" : 0.0
+    "z" : -3.0
   },
   "obj2StartPosition" : {
     "x" : 0.0,
@@ -12,7 +12,7 @@
   "obj3StartPosition" : {
     "x" : 3.0,
     "y" : 3.0,
-    "z" : 0.0
+    "z" : 3.0
   },
   "cameraPos" : {
     "x" : 0.0,
@@ -34,5 +34,5 @@
     "y" : 1.0,
     "z" : 0.0
   },
-  "parametricCurveOn" : false
+  "parametricCurveOn" : true
 }

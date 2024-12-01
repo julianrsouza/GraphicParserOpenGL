@@ -66,6 +66,6 @@ public class Objeto {
 
     public void setScale(float scale) {
         this.scale = scale;
-        updateModelMatrix(); // Recalcula a modelMatrix sempre que a escala for alterada
+        updateModelMatrix();
     }
 }
