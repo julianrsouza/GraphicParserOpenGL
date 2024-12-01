@@ -5,8 +5,11 @@ in vec2 texCoord;      // Coordenadas da textura (passadas pelo vertex shader)
 in vec3 scaledNormal;  // Normal ajustada para escala
 in vec3 fragPos;       // Posição do fragmento no espaço do mundo
 
-// Propriedades da superfície
-uniform float ka, kd, ks, q;
+// Propriedades da superfície (agora como vec3 para RGB)
+uniform vec3 ka; // Coeficiente de luz ambiente para RGB
+uniform vec3 kd; // Coeficiente de luz difusa para RGB
+uniform vec3 ks; // Coeficiente de luz especular para RGB
+uniform float q; // Exponente especular
 
 // Propriedades da fonte de luz
 uniform vec3 lightPos, lightColor;
@@ -21,7 +24,7 @@ out vec4 color;
 
 void main()
 {
-    // Coeficiente de luz ambiente
+    // Coeficiente de luz ambiente (para cada canal RGB)
     vec3 ambient = ka * lightColor;
 
     // Coeficiente de reflexão difusa

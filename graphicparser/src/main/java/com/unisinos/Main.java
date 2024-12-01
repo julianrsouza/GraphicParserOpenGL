@@ -37,6 +37,8 @@ public class Main {
         Janela janela = new Janela(800, 600, "Visualizador 3D");
         janela.init();
 
+        GL11.glClearColor(0.9f, 0.9f, 0.9f, 1.0f);
+
         Shader shader = new Shader(Paths.get("graphicparser", "src", "main", "resources", "shaders", "vertex.glsl").toString(), 
                                    "graphicparser\\src\\main\\resources\\shaders\\fragment.glsl");
 
@@ -71,12 +73,6 @@ public class Main {
         // Definir a posição e cor da luz
         Vector3f lightPos = new Vector3f(2.0f, 2.0f, 2.0f);
         Vector3f lightColor = new Vector3f(1.0f, 1.0f, 1.0f);
-
-        // Coeficientes de reflexão Phong
-        float ka = 0.1f;
-        float kd = 0.7f;
-        float ks = 0.5f;
-        float q = 32.0f;
 
         // Desabilitar culling para garantir que todas as faces dos objetos sejam renderizadas
         GL11.glDisable(GL11.GL_CULL_FACE);
@@ -122,10 +118,6 @@ public class Main {
             shader.setUniform("lightPos", lightPos);
             shader.setUniform("lightColor", lightColor);
             shader.setUniform("cameraPos", cameraPos);
-            shader.setUniform("ka", ka);
-            shader.setUniform("kd", kd);
-            shader.setUniform("ks", ks);
-            shader.setUniform("q", q);
         
             renderObjects(objetos, shader, angleX, angleY, angleZ, viewMatrix);
         
@@ -141,7 +133,7 @@ public class Main {
     public static void renderObjects(List<Objeto> objetos, Shader shader, float angleX, float angleY, float angleZ, Matrix4f viewMatrix) {
         for (Objeto obj : objetos) {
             obj.modelMatrix = new Matrix4f();
-    
+
             obj.modelMatrix.translate(obj.getPosition());
             
             if (obj.isSelected()) {
@@ -163,7 +155,12 @@ public class Main {
             shader.setUniform("cameraPos", cameraPos);
     
             for (Mesh mesh : obj.getMeshes()) {
-                if (mesh.getMaterial().getTextureId() != -1) {
+                Material meshMaterial = mesh.getMaterial();
+                shader.setUniform("ka", meshMaterial.getKa());
+                shader.setUniform("kd", meshMaterial.getKd());
+                shader.setUniform("ks", meshMaterial.getKs());
+                shader.setUniform("q", meshMaterial.getQ());
+                if (meshMaterial.getTextureId() != -1) {
                     GL30.glBindTexture(GL30.GL_TEXTURE_2D, mesh.getMaterial().getTextureId());
                 }
                 GL30.glBindVertexArray(mesh.getVao());
@@ -225,6 +222,10 @@ public class Main {
             } else if (key == GLFW.GLFW_KEY_RIGHT && (action == GLFW.GLFW_PRESS || action == GLFW.GLFW_REPEAT)) {
                 objSelecionado.getPosition().x += 0.1f;
                 objSelecionado.updateModelMatrix();
+            } else if (key == GLFW.GLFW_KEY_PAGE_UP && (action == GLFW.GLFW_PRESS || action == GLFW.GLFW_REPEAT)) {
+                objSelecionado.getPosition().z += 0.1f;
+            } else if (key == GLFW.GLFW_KEY_PAGE_DOWN && (action == GLFW.GLFW_PRESS || action == GLFW.GLFW_REPEAT)) {
+                objSelecionado.getPosition().z -= 0.1f;
             }
             if (objSelecionado != null) {
                 if (key == GLFW.GLFW_KEY_KP_ADD && action == GLFW.GLFW_PRESS) {
