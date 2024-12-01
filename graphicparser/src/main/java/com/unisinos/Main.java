@@ -7,15 +7,16 @@ import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL30;
 
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 
 public class Main {
     // Variáveis para controle de objetos e câmera
-    static Vector3f cameraPos = new Vector3f(0.0f, 0.0f, 5.0f);
-    static Vector3f cameraFront = new Vector3f(0.0f, 0.0f, -1.0f);
-    static Vector3f cameraUp = new Vector3f(0.0f, 1.0f, 0.0f);
-    static Vector3f cameraRight = new Vector3f(1.0f, 0.0f, 0.0f);
+    static Vector3f cameraPos;
+    static Vector3f cameraFront;
+    static Vector3f cameraUp;
+    static Vector3f cameraRight;
     static float angleX = 0.0f;
     static float angleY = 0.0f;
     static float angleZ = 0.0f;
@@ -25,7 +26,7 @@ public class Main {
     static boolean rotateXminus = false, rotateYminus = false, rotateZminus = false;
     static float pitch = 0.0f;
     static float yaw = 0.0f;
-    static float distance = 5.0f;
+    static float distance = 12.0f;
     static float rotationSpeed = 1.0f;
     static Objeto objSelecionado = null;
     static float scaleStep = 0.1f;
@@ -35,17 +36,25 @@ public class Main {
         Janela janela = new Janela(800, 600, "Visualizador 3D");
         janela.init();
 
-        Shader shader = new Shader("graphicparser\\src\\main\\resources\\shaders\\vertex.glsl", 
+        Shader shader = new Shader(Paths.get("graphicparser", "src", "main", "resources", "shaders", "vertex.glsl").toString(), 
                                    "graphicparser\\src\\main\\resources\\shaders\\fragment.glsl");
 
-        List<Mesh> meshes1 = OBJLoader.loadOBJWithMultipleMeshes("graphicparser\\src\\main\\resources\\obj\\Pikachu.obj");
-        //List<Mesh> meshes2 = OBJLoader.loadOBJWithMultipleMeshes("graphicparser\\src\\main\\resources\\obj\\suzanetriangle.obj");
-        //List<Mesh> meshes3 = OBJLoader.loadOBJWithMultipleMeshes("graphicparser\\src\\main\\resources\\obj\\nave.obj");
+        Scene scene = SceneLoader.loadScene("graphicparser\\src\\main\\resources\\Scene\\scene.json");
+        cameraPos = scene.getCameraPos();
+        cameraFront = scene.getCameraFront();
+        cameraRight = scene.getCameraRight();
+        cameraUp = scene.getCameraUp();
 
-        Objeto obj1 = createObject(new Vector3f(-1.0f, 0.0f, 0.0f), meshes1);
-        //Objeto obj2 = createObject(new Vector3f(0.0f, 0.0f, 0.0f), meshes2);
-        //Objeto obj3 = createObject(new Vector3f(1.0f, 0.0f, 0.0f), meshes3);
-        List<Objeto> objetos = Arrays.asList(obj1);
+        updateCameraDirection();
+
+        List<Mesh> meshes1 = OBJLoader.loadOBJWithMultipleMeshes("graphicparser\\src\\main\\resources\\obj\\Suzanne.obj");
+        List<Mesh> meshes2 = OBJLoader.loadOBJWithMultipleMeshes("graphicparser\\src\\main\\resources\\obj\\Pikachu.obj");
+        List<Mesh> meshes3 = OBJLoader.loadOBJWithMultipleMeshes("graphicparser\\src\\main\\resources\\obj\\Pokebola.obj");
+
+        Objeto obj1 = createObject(scene.getObj1StartPosition(), meshes1);
+        Objeto obj2 = createObject(scene.getObj2StartPosition(), meshes2);
+        Objeto obj3 = createObject(scene.getObj3StartPosition(), meshes3);
+        List<Objeto> objetos = Arrays.asList(obj1, obj2, obj3);
 
         GLFW.glfwSetKeyCallback(janela.getWindowHandle(), (window, key, scancode, action, mods) -> {
             key_callback(janela.getWindowHandle(), key, scancode, action, mods, objetos);
@@ -132,29 +141,26 @@ public class Main {
     // Função de renderização dos objetos
     // Função de renderização dos objetos
     public static void renderObjects(List<Objeto> objetos, Shader shader, float angleX, float angleY, float angleZ, Matrix4f viewMatrix) {
-        if (objSelecionado != null) {
-            // Resetar a modelMatrix para garantir que não haja acúmulo de transformações
-            objSelecionado.modelMatrix = new Matrix4f();
+        for (Objeto obj : objetos) {
+            obj.modelMatrix = new Matrix4f();
     
-            // Usar o valor de escala do objeto selecionado
-            objSelecionado.modelMatrix.scale(objSelecionado.getScale());  // Aplica a escala real
-    
-            // Aplica a translação do objeto
-            objSelecionado.modelMatrix.translate(objSelecionado.getPosition());  // Usa a posição do objeto selecionado
-    
-            // Aplica rotações se necessário
-            objSelecionado.modelMatrix
-            .rotateX(angleX)  // Aplica a rotação acumulada no eixo X
-            .rotateY(angleY)  // Aplica a rotação acumulada no eixo Y
-            .rotateZ(angleZ);
+            obj.modelMatrix.translate(obj.getPosition());
+            
+            if (obj.isSelected()) {
+                // Aplica rotações
+                obj.modelMatrix
+                .rotateX(angleX)  // Aplica a rotação acumulada no eixo X
+                .rotateY(angleY)  // Aplica a rotação acumulada no eixo Y
+                .rotateZ(angleZ);
+            } 
     
             // Atualiza a matriz do objeto no shader
-            shader.setUniform("model", objSelecionado.modelMatrix);
+            shader.setUniform("model", obj.modelMatrix);
             shader.setUniform("view", viewMatrix);
             shader.setUniform("cameraPos", cameraPos);
     
-            // Renderiza as malhas do objeto selecionado
-            for (Mesh mesh : objSelecionado.getMeshes()) {
+            // Renderiza as malhas do objeto
+            for (Mesh mesh : obj.getMeshes()) {
                 if (mesh.getMaterial().getTextureId() != -1) {
                     GL30.glBindTexture(GL30.GL_TEXTURE_2D, mesh.getMaterial().getTextureId());
                 }
@@ -163,50 +169,13 @@ public class Main {
             }
     
             GL30.glBindVertexArray(0);
-        } else {
-            // Caso nenhum objeto esteja selecionado, renderiza todos os objetos de forma padrão
-            float totalWidth = 3 * 0.3f + 2.0f * 2.0f;
-            float startX = -totalWidth / 2.0f + 0.3f / 2.0f;
-    
-            for (Objeto obj : objetos) {
-                obj.modelMatrix = new Matrix4f();
-    
-                // Usar uma escala padrão para objetos não selecionados
-                obj.modelMatrix.scale(0.3f);  // Escala padrão para objetos não selecionados
-                obj.modelMatrix.translate(new Vector3f(startX, 0.0f, 0.0f));
-    
-                // Aplica rotações se necessário
-                obj.modelMatrix
-                .rotateX(angleX)  // Aplica a rotação acumulada no eixo X
-                .rotateY(angleY)  // Aplica a rotação acumulada no eixo Y
-                .rotateZ(angleZ);
-    
-                // Atualiza a matriz do objeto no shader
-                shader.setUniform("model", obj.modelMatrix);
-                shader.setUniform("view", viewMatrix);
-                shader.setUniform("cameraPos", cameraPos);
-    
-                // Renderiza as malhas de todos os objetos
-                for (Mesh mesh : obj.getMeshes()) {
-                    if (mesh.getMaterial().getTextureId() != -1) {
-                        GL30.glBindTexture(GL30.GL_TEXTURE_2D, mesh.getMaterial().getTextureId());
-                    }
-                    GL30.glBindVertexArray(mesh.getVao());
-                    GL11.glDrawArrays(GL11.GL_TRIANGLES, 0, mesh.getVertexCount());
-                }
-    
-                GL30.glBindVertexArray(0);
-    
-                startX += 0.3f + 2.0f;
-            }
         }
     }
+
     
     // Função de controle de teclado
     public static void key_callback(long window, int key, int scancode, int action, int mods, List<Objeto> objects) {
         // Configurações de movimento
-        float cameraSpeed = 0.1f; // Velocidade de movimento da câmera
-    
         if (key == GLFW.GLFW_KEY_1 && action == GLFW.GLFW_PRESS) {
             setSelectedObj(objects, 0);
         } else if (key == GLFW.GLFW_KEY_2 && action == GLFW.GLFW_PRESS) {
@@ -264,12 +233,10 @@ public class Main {
             if (objSelecionado != null) {
                 if (key == GLFW.GLFW_KEY_KP_ADD && action == GLFW.GLFW_PRESS) {
                     objSelecionado.setScale(objSelecionado.getScale() + scaleStep);
-                    System.out.println(objSelecionado.getScale());
                     objSelecionado.updateModelMatrix();
                 } else if (key == GLFW.GLFW_KEY_KP_SUBTRACT && action == GLFW.GLFW_PRESS) {
                     float newScale = Math.max(0.1f, objSelecionado.getScale() - scaleStep);
                     objSelecionado.setScale(newScale);
-                    System.out.println(objSelecionado.getScale());
                     objSelecionado.updateModelMatrix();
                 }
             }
@@ -326,10 +293,6 @@ public class Main {
     public static void setSelectedObj(List<Objeto> objects, int index) {
         for (int i = 0; i < objects.size(); i++) {
             objects.get(i).setSelected(i == index);
-        }
-        if (index == -1) {
-            cameraPos.set(0.0f, 0.0f, 5.0f);
-            objectPosition.set(0.0f, 0.0f, 0.0f);
         }
     }
 

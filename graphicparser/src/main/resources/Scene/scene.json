@@ -1,0 +1,38 @@
+{
+  "obj1StartPosition" : {
+    "x" : -3.0,
+    "y" : -3.0,
+    "z" : 0.0
+  },
+  "obj2StartPosition" : {
+    "x" : 0.0,
+    "y" : -2.0,
+    "z" : 0.0
+  },
+  "obj3StartPosition" : {
+    "x" : 3.0,
+    "y" : 3.0,
+    "z" : 0.0
+  },
+  "cameraPos" : {
+    "x" : 0.0,
+    "y" : 0.0,
+    "z" : 5.0
+  },
+  "cameraFront" : {
+    "x" : 0.0,
+    "y" : 0.0,
+    "z" : -1.0
+  },
+  "cameraUp" : {
+    "x" : 0.0,
+    "y" : 1.0,
+    "z" : 0.0
+  },
+  "cameraRight" : {
+    "x" : 0.0,
+    "y" : 1.0,
+    "z" : 0.0
+  },
+  "parametricCurveOn" : false
+}

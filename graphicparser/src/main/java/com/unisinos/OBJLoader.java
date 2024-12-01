@@ -14,9 +14,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 
-import java.io.*;
-import java.util.*;
-
 public class OBJLoader {
 
     public static List<Mesh> loadOBJWithMultipleMeshes(String filePath) {
