@@ -30,6 +30,7 @@ public class Main {
     static float rotationSpeed = 1.0f;
     static Objeto objSelecionado = null;
     static float scaleStep = 0.1f;
+    static boolean parametricCurveOn;
 
     public static void main(String[] args) {
         // Inicializa janela e shaders
@@ -46,6 +47,8 @@ public class Main {
         cameraUp = scene.getCameraUp();
 
         updateCameraDirection();
+
+        parametricCurveOn = scene.isParametricCurveOn();
 
         List<Mesh> meshes1 = OBJLoader.loadOBJWithMultipleMeshes("graphicparser\\src\\main\\resources\\obj\\Suzanne.obj");
         List<Mesh> meshes2 = OBJLoader.loadOBJWithMultipleMeshes("graphicparser\\src\\main\\resources\\obj\\Pikachu.obj");
@@ -81,25 +84,25 @@ public class Main {
         // Loop principal da aplicação
         while (!GLFW.glfwWindowShouldClose(janela.getWindowHandle())) {
             GLFW.glfwPollEvents();
-
+        
             objSelecionado = getSelectedObject(objetos);
-
+        
             GL11.glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
-
+        
             shader.use();
-
+        
             if (rotateXmore) {
                 angleX += 0.02;
             }
-
+        
             if (rotateXminus) {
                 angleX -= 0.02;
             }
-
+        
             if (rotateYmore) {
                 angleY += 0.02;
             }
-
+        
             if (rotateYminus) {
                 angleY -= 0.02;
             }
@@ -107,13 +110,13 @@ public class Main {
             if (rotateZmore) {
                 angleZ += 0.02;
             }
-
+        
             if (rotateZminus) {
                 angleZ -= 0.02;
             }
-
+        
             viewMatrix = new Matrix4f().lookAt(cameraPos, new Vector3f(0, 0, 0), cameraUp);
-
+        
             // Atualiza matrizes de transformação e uniformes
             shader.setUniform("view", viewMatrix);
             shader.setUniform("projection", projectionMatrix);
@@ -124,13 +127,13 @@ public class Main {
             shader.setUniform("kd", kd);
             shader.setUniform("ks", ks);
             shader.setUniform("q", q);
-
+        
             // Renderiza os objetos
             renderObjects(objetos, shader, angleX, angleY, angleZ, viewMatrix);
-
+        
             // Limpar a ligação do VAO
             GL30.glBindVertexArray(0);
-
+        
             GLFW.glfwSwapBuffers(janela.getWindowHandle());
         }
 
@@ -147,6 +150,12 @@ public class Main {
             obj.modelMatrix.translate(obj.getPosition());
             
             if (obj.isSelected()) {
+
+                if (parametricCurveOn) {
+                    float t = (float) (System.nanoTime() * 1e-9); // Tempo contínuo para a animação
+                    obj.setPosition(getParametricCurvePosition(t));  // Atualiza a posição do objeto 3
+                    obj.updateModelMatrix();  // Atualiza a matriz do objeto 3
+                }
                 // Aplica rotações
                 obj.modelMatrix
                 .rotateX(angleX)  // Aplica a rotação acumulada no eixo X
@@ -214,6 +223,10 @@ public class Main {
         } else if (key == GLFW.GLFW_KEY_E && (action == GLFW.GLFW_PRESS || action == GLFW.GLFW_REPEAT)) {
             distance *= 0.9f; // Afasta a câmera
             updateCameraDirection(); // Recalcula a posição da câmera com a nova distância
+        }
+
+        if (key == GLFW.GLFW_KEY_SPACE && action == GLFW.GLFW_PRESS) {
+            parametricCurveOn = !parametricCurveOn;
         }
         
         if (objSelecionado != null) {
@@ -302,5 +315,23 @@ public class Main {
             objeto.addMesh(mesh);
         }
         return objeto;
+    }
+
+    private static Vector3f getParametricCurvePosition(float t) {
+        float radius = 5.0f;
+        float height = 1.0f;
+        float speed = 0.3f; // Controle da velocidade
+    
+        // Multiplica o tempo por speed para controlar a velocidade
+        t *= speed; // t agora vai se mover mais devagar ou mais rápido dependendo do valor de speed
+    
+        // Controla o valor de t para não ser muito grande, mantendo-o no intervalo [0, 2π]
+        t = (float) (t % (2 * Math.PI)); // Limita t entre 0 e 2π
+    
+        float x = radius * (float) Math.cos(t);
+        float y = radius * (float) Math.sin(t);
+        float z = height * t;
+    
+        return new Vector3f(x, y, z);
     }
 }
